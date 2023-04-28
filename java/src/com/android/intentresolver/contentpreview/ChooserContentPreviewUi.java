@@ -38,7 +38,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
 
-import com.android.intentresolver.ImageLoader;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 
@@ -65,10 +64,6 @@ public final class ChooserContentPreviewUi {
         /** Create an action that opens the share content in a system-default editor. */
         @Nullable
         ActionRow.Action createEditButton();
-
-        /** Create an "Share to Nearby" action. */
-        @Nullable
-        ActionRow.Action createNearbyButton();
 
         /** Create custom actions */
         List<ActionRow.Action> createCustomActions();
@@ -151,16 +146,23 @@ public final class ChooserContentPreviewUi {
         }
         ArrayList<FileInfo> files = new ArrayList<>(uris.size());
         int previewCount = readFileInfo(contentResolver, typeClassifier, uris, files);
+        CharSequence text = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+        if (!TextUtils.isEmpty(text)) {
+            return new FilesPlusTextContentPreviewUi(files,
+                    targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT),
+                    actionFactory,
+                    imageLoader,
+                    typeClassifier,
+                    headlineGenerator);
+        }
         if (previewCount == 0) {
             return new FileContentPreviewUi(
                     files,
                     actionFactory,
-                    imageLoader,
                     headlineGenerator);
         }
         return new UnifiedContentPreviewUi(
                 files,
-                targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT),
                 actionFactory,
                 imageLoader,
                 typeClassifier,

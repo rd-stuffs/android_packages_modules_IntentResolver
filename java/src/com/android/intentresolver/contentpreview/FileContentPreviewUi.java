@@ -22,10 +22,8 @@ import android.util.PluralsMessageFormatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.intentresolver.ImageLoader;
 import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 
@@ -40,17 +38,14 @@ class FileContentPreviewUi extends ContentPreviewUi {
 
     private final List<FileInfo> mFiles;
     private final ChooserContentPreviewUi.ActionFactory mActionFactory;
-    private final ImageLoader mImageLoader;
     private final HeadlineGenerator mHeadlineGenerator;
 
     FileContentPreviewUi(
             List<FileInfo> files,
             ChooserContentPreviewUi.ActionFactory actionFactory,
-            ImageLoader imageLoader,
             HeadlineGenerator headlineGenerator) {
         mFiles = files;
         mActionFactory = actionFactory;
-        mImageLoader = imageLoader;
         mHeadlineGenerator = headlineGenerator;
     }
 
@@ -73,7 +68,7 @@ class FileContentPreviewUi extends ContentPreviewUi {
 
         final int uriCount = mFiles.size();
 
-        displayHeadline(contentPreviewLayout, mHeadlineGenerator.getItemsHeadline(mFiles.size()));
+        displayHeadline(contentPreviewLayout, mHeadlineGenerator.getFilesHeadline(mFiles.size()));
 
         if (uriCount == 0) {
             contentPreviewLayout.setVisibility(View.GONE);
@@ -82,76 +77,32 @@ class FileContentPreviewUi extends ContentPreviewUi {
             return contentPreviewLayout;
         }
 
-        if (uriCount == 1) {
-            loadFileUriIntoView(mFiles.get(0), contentPreviewLayout, mImageLoader);
-        } else {
-            FileInfo fileInfo = mFiles.get(0);
+        FileInfo fileInfo = mFiles.get(0);
+        TextView fileNameView = contentPreviewLayout.findViewById(
+                R.id.content_preview_filename);
+        fileNameView.setText(fileInfo.getName());
+
+        TextView secondLine = contentPreviewLayout.findViewById(
+                R.id.content_preview_more_files);
+        if (uriCount > 1) {
             int remUriCount = uriCount - 1;
             Map<String, Object> arguments = new HashMap<>();
             arguments.put(PLURALS_COUNT, remUriCount);
-            arguments.put(PLURALS_FILE_NAME, fileInfo.getName());
-            String fileName =
-                    PluralsMessageFormatter.format(resources, arguments, R.string.file_count);
-
-            TextView fileNameView = contentPreviewLayout.findViewById(
-                    com.android.internal.R.id.content_preview_filename);
-            fileNameView.setText(fileName);
-
-            View thumbnailView = contentPreviewLayout.findViewById(
-                    com.android.internal.R.id.content_preview_file_thumbnail);
-            thumbnailView.setVisibility(View.GONE);
-
-            ImageView fileIconView = contentPreviewLayout.findViewById(
-                    com.android.internal.R.id.content_preview_file_icon);
-            fileIconView.setVisibility(View.VISIBLE);
-            fileIconView.setImageResource(R.drawable.ic_file_copy);
+            secondLine.setText(
+                    PluralsMessageFormatter.format(resources, arguments, R.string.more_files));
+        } else {
+            secondLine.setVisibility(View.GONE);
         }
 
         final ActionRow actionRow =
                 contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
-        actionRow.setActions(
-                createActions(
-                        createFilePreviewActions(),
-                        mActionFactory.createCustomActions()));
+        List<ActionRow.Action> actions =
+                createActions(new ArrayList<>(), mActionFactory.createCustomActions());
+        actionRow.setActions(actions);
+        if (actions.isEmpty()) {
+            contentPreviewLayout.findViewById(R.id.actions_top_divider).setVisibility(View.GONE);
+        }
 
         return contentPreviewLayout;
-    }
-
-    private List<ActionRow.Action> createFilePreviewActions() {
-        List<ActionRow.Action> actions = new ArrayList<>(1);
-        //TODO(b/120417119):
-        // add action buttonFactory.createCopyButton()
-        ActionRow.Action action = mActionFactory.createNearbyButton();
-        if (action != null) {
-            actions.add(action);
-        }
-        return actions;
-    }
-
-    private static void loadFileUriIntoView(
-            final FileInfo fileInfo,
-            final View parent,
-            final ImageLoader imageLoader) {
-        TextView fileNameView = parent.findViewById(
-                com.android.internal.R.id.content_preview_filename);
-        fileNameView.setText(fileInfo.getName());
-
-        if (fileInfo.getPreviewUri() != null) {
-            imageLoader.loadImage(
-                    fileInfo.getPreviewUri(),
-                    (bitmap) -> updateViewWithImage(
-                            parent.findViewById(
-                                    com.android.internal.R.id.content_preview_file_thumbnail),
-                            bitmap));
-        } else {
-            View thumbnailView = parent.findViewById(
-                    com.android.internal.R.id.content_preview_file_thumbnail);
-            thumbnailView.setVisibility(View.GONE);
-
-            ImageView fileIconView = parent.findViewById(
-                    com.android.internal.R.id.content_preview_file_icon);
-            fileIconView.setVisibility(View.VISIBLE);
-            fileIconView.setImageResource(R.drawable.chooser_file_generic);
-        }
     }
 }

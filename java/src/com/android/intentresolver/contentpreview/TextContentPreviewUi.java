@@ -27,7 +27,6 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.android.intentresolver.ImageLoader;
 import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 
@@ -78,6 +77,9 @@ class TextContentPreviewUi extends ContentPreviewUi {
         ViewGroup contentPreviewLayout = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_text, parent, false);
 
+        boolean minimalPreview =
+                parent.getContext().getResources().getBoolean(R.bool.minimal_preview);
+
         final ActionRow actionRow =
                 contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
         actionRow.setActions(
@@ -98,7 +100,7 @@ class TextContentPreviewUi extends ContentPreviewUi {
 
         TextView previewTitleView = contentPreviewLayout.findViewById(
                 com.android.internal.R.id.content_preview_title);
-        if (TextUtils.isEmpty(mPreviewTitle)) {
+        if (TextUtils.isEmpty(mPreviewTitle) || minimalPreview) {
             previewTitleView.setVisibility(View.GONE);
         } else {
             previewTitleView.setText(mPreviewTitle);
@@ -106,7 +108,7 @@ class TextContentPreviewUi extends ContentPreviewUi {
 
         ImageView previewThumbnailView = contentPreviewLayout.findViewById(
                 com.android.internal.R.id.content_preview_thumbnail);
-        if (!validForContentPreview(mPreviewThumbnail)) {
+        if (!validForContentPreview(mPreviewThumbnail) || minimalPreview) {
             previewThumbnailView.setVisibility(View.GONE);
         } else {
             mImageLoader.loadImage(
@@ -125,10 +127,6 @@ class TextContentPreviewUi extends ContentPreviewUi {
     private List<ActionRow.Action> createTextPreviewActions() {
         ArrayList<ActionRow.Action> actions = new ArrayList<>(2);
         actions.add(mActionFactory.createCopyButton());
-        ActionRow.Action nearbyAction = mActionFactory.createNearbyButton();
-        if (nearbyAction != null) {
-            actions.add(nearbyAction);
-        }
         return actions;
     }
 }

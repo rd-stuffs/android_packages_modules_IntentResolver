@@ -18,7 +18,5 @@
 */
 -->
 <resources>
-
     <dimen name="chooser_width">624dp</dimen>
-
 </resources>
